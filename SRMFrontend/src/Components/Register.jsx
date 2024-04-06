@@ -1,81 +1,117 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react'
+// import { useRecoilState } from 'recoil'
+import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+// import { authState } from '../state/atoms/AuthState'
+const url = 'http://localhost:5000/api/auth'
 
-export default function Register() {
-    const navigate = useNavigate();
+const formInputs = [
+  { name: 'name', label: 'Name', placeholder: 'John', type: 'text' },
+  { name: 'role', label: 'Role', placeholder: 'user', type: 'text' },
 
-    const [name, setName] = useState('');
-    const [role, setRole] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
+  {
+    name: 'email',
+    label: 'Email',
+    placeholder: 'example@example.com',
+    type: 'email',
+  },
+  {
+    name: 'password',
+    label: 'Password',
+    placeholder: 'Enter your password',
+    type: 'password',
+  },
+]
 
-    const changeName = (event) => setName(event.target.value);
-    const changeRole = (event) => setRole(event.target.value);
-    const changeEmail = (event) => setEmail(event.target.value);
-    const changePassword = (event) => setPassword(event.target.value);
-
-    async function handleSumbit(event) {
-        event.preventDefault();
-        console.log(name, role, email, password);
-        let data = await fetch('http://localhost:5000/api/auth/create-user', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ 'name': name, 'role': role, 'email': email, 'password': password })
-        });
-
-        let response = await data.json();
-        if (data.status === 201) {
-            setMessage('User Registered');
-            localStorage.setItem('auth_token', response.token);
-            setTimeout(() => {
-                navigate('/forces');
-            }, 2000);
-        } else {
-            setMessage('Error Registering User');
-            setTimeout(() => {
-                setMessage('');
-            }, 2000);
-        }
+const SignUp = () => {
+  useEffect(() => {
+    if (localStorage.getItem('auth_token')) {
+      history('/')
     }
+  }, [])
+//   const [auth, setAuth] = useRecoilState(authState)
+  const history = useNavigate()
 
-    return (
-        <>
-            <div>{message}</div>
-            <form onSubmit={handleSumbit} className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-500">
+  const [formData, setformData] = useState({
+    name: '',
+    email: '',
+    role: '',
+    password: '',
+  })
+  const handleChange = (e) => {
+    setformData((prevData) => ({
+      ...prevData,
+      [e.target.name]: e.target.value,
+    }))
+  }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const response = await axios.post(`${url}/create-user`, formData)
+      const { data } = response
+      if (data.success) {
+        localStorage.setItem('auth-token', data.token)
+        history('/forces')
+        setAuth(!auth)
+      }
+    } catch (error) {
+      alert(error.response.data.message)
+    }
+  }
+  return (
+    <div className='flex items-center justify-center py-4 '>
+      <div className='flex flex-col items-center justify-center gap-8 px-8 py-10 bg-white rounded-lg shadow-lg '>
+        <div className='flex flex-col items-center justify-center gap-2 px-14'>
+          <h2 className='text-4xl font-bold'>Sign Up</h2>
+          <p className='text-lg font-semibold text-center text-slate-400'>
+            Enter your information to create an <br />
+            account
+          </p>
+        </div>
+
+        <form
+          className='flex flex-col w-full gap-8'
+          action='submit'
+          onSubmit={handleSubmit}
+        >
+          {formInputs.map((elem) => {
+            return (
+              <div
+                key={elem.name}
+                className='flex flex-col gap-1'
+              >
+                <label className='text-lg font-bold'>{elem.label}</label>
                 <input
-                    type='text'
-                    placeholder='Enter Name'
-                    onChange={changeName}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
+                  className='px-2 py-3 rounded-md shadow-md text-md'
+                  value={formData[elem.name]}
+                  type={elem.type}
+                  placeholder={elem.placeholder}
+                  name={elem.name}
+                  onChange={handleChange}
                 />
-                <input
-                    type='role'
-                    placeholder='Enter Role'
-                    onChange={changeRole}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
-                />
-                <input
-                    type='email'
-                    placeholder='Enter Email'
-                    onChange={changeEmail}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
-                />
-                <input
-                    type='password'
-                    placeholder='Enter Password'
-                    onChange={changePassword}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
-                />
-                <button
-                    type="submit"
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
-                >
-                    Submit
-                </button>
-            </form>
-        </>
-    );
+              </div>
+            )
+          })}
+          <button
+            type='submit'
+            className='py-3 font-bold text-white rounded-md bg-primary hover:bg-secondary'
+          >
+            Sign Up
+          </button>
+        </form>
+
+        <h3 className='text-lg font-semibold'>
+          Already have an account?
+          <Link
+            className='font-bold underline'
+            to={'/login'}
+          >
+            Login
+          </Link>
+        </h3>
+      </div>
+    </div>
+  )
 }
+
+export default SignUp

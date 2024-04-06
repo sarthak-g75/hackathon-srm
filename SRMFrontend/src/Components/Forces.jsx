@@ -80,7 +80,7 @@ const Forces = () => {
             <div className="text-yellow-700">{message}</div>
             {batallions ? batallions : <div></div>}
             <div className='h-[100px] w-[500px]'>
-                <form onSubmit={handleSubmit} className="flex flex-col justify-center items-center h-screen bg-yellow-200">
+                <form onSubmit={handleSubmit} className="flex flex-col justify-center items-center h-screen">
                     <input
                         type='text'
                         placeholder='Enter Batallion Name'

@@ -1,66 +1,118 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 
-export default function Login() {
-    const navigate = useNavigate();
-    const [loggedIn, setLoggedIn] = useState(true);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+import axios from 'axios'
+const url = 'http://localhost:5000/api/auth'
 
-    function changeEmail(event) {
-        setEmail(event.target.value);
+const formInputs = [
+  {
+    name: 'email',
+    label: 'Email',
+    placeholder: 'example@example.com',
+    type: 'email',
+  },
+  {
+    name: 'password',
+    label: 'Password',
+    placeholder: 'Enter your password',
+    type: 'password',
+  },
+]
+
+const SignIn = () => {
+
+    const history = useNavigate()
+  useEffect(() => {
+    if (localStorage.getItem('auth_token')) {
+      history('/')
     }
+  }, [])
 
-    function changePassword(event) {
-        setPassword(event.target.value);
+  const [formData, setformData] = useState({
+    email: '',
+    password: '',
+  })
+  const handleChange = (e) => {
+    setformData((prevData) => ({
+      ...prevData,
+      [e.target.name]: e.target.value,
+    }))
+  }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      const response = await axios.post(`${url}/login`, {
+        email: formData.email,
+        password: formData.password,
+      })
+      const { data } = response
+      // console.log(data)
+      if (data.success) {
+        // setAuth(!auth)
+        localStorage.setItem('auth_token', data.token)
+       
+        history('/forces')
+      } else {
+        alert('Please enter correct credentials')
+      }
+    } catch (error) {
+      // console.log()
+      alert(error.response.data.message)
     }
+  }
+  return (
+    <div className='flex items-center justify-center h-screen'>
+      <div className='flex flex-col items-center justify-center gap-8 px-8 py-10 bg-white rounded-lg shadow-lg '>
+        <div className='flex flex-col items-center justify-center gap-2 px-14'>
+          <h2 className='text-4xl font-bold'>Sign In</h2>
+          <p className='text-lg font-semibold text-center text-slate-400'>
+            Enter your credentials to access your <br />
+            account
+          </p>
+        </div>
 
-    async function handleSubmit(event) {
-        event.preventDefault();
-
-        let data = await fetch('http://localhost:5000/api/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ 'email': email, 'password': password }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        let response = await data.json();
-        if (data.status === 200) {
-            localStorage.setItem('auth_token', response.token)
-            navigate('/forces');
-        } else {
-
-        }
-    }
-
-    useEffect(() => {
-
-    })
-
-    return (
-        <>
-            <form className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-yellow-200 via-yellow-400 to-yellow-500">
+        <form
+          className='flex flex-col w-full gap-8'
+          onSubmit={handleSubmit}
+        >
+          {formInputs.map((elem) => {
+            return (
+              <div
+                key={elem.name}
+                className='flex flex-col gap-1'
+              >
+                <label className='text-lg font-bold'>{elem.label}</label>
                 <input
-                    type='email'
-                    placeholder='testuser@gmail.com'
-                    onChange={changeEmail}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
+                  className='px-2 py-3 rounded-md shadow-md text-md'
+                  value={formData[elem.name]}
+                  type={elem.type}
+                  placeholder={elem.placeholder}
+                  name={elem.name}
+                  onChange={handleChange}
                 />
-                <input
-                    type='password'
-                    placeholder='test123'
-                    onChange={changePassword}
-                    className="border-b-2 border-yellow-700 focus:outline-none focus:border-yellow-900 bg-transparent my-2 p-2 rounded-lg text-xl text-gray-800 placeholder-gray-600"
-                />
-                <button
-                    onClick={handleSubmit}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-lg mt-4"
-                >
-                    Submit
-                </button>
-            </form>
-        </>
-    )
+              </div>
+            )
+          })}
+          <button
+            type='submit'
+            className='py-3 font-bold text-white rounded-md bg-primary hover:bg-secondary'
+          >
+            Sign In
+          </button>
+        </form>
+
+        <h3 className='text-lg font-semibold'>
+          Don't have an account?{' '}
+          <Link
+            className='font-bold underline'
+            to={'/register'}
+          >
+            Sign Up
+          </Link>
+        </h3>
+      </div>
+    </div>
+  )
 }
+
+export default SignIn
